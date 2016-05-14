@@ -1,28 +1,32 @@
-var loadAllTorrentFolders = function() {
-    database.getTorrentFolders(function(data) {
-        var source = $("#torrentfolder-template").html();
-        var template = Handlebars.compile(source);
-        var wrapper = data;
-        var torrentfoldershtml = template(wrapper);
-        $('.torrentfolders').html(torrentfoldershtml);
-        getMyShows();
-    });
+var settings = {
+    torrentfolders: {
+        load: function() {
+            database.local.folders.get(function(data) {
+                template.construct("torrentfolder", data, function(html) {
+                    $('.torrentfolders').html(html);
+                });
+            });
+        }
+    }
 };
-loadAllTorrentFolders();
+var loadAllTorrentFolders = function() {
 
-$(document).on('change','#torrentfolderinput', function(e) {
-    torrentfolder = $(this).val();
-   	database.addTorrentFolder({path: torrentfolder}, function() {
-   		loadAllTorrentFolders();
-   	});
+};
+settings.torrentfolders.load();
+
+$(document).on('change', '#torrentfolderinput', function(e) {
+    torrentfolder = $(this).val().trim();
+    database.local.folders.add({ path: torrentfolder }, function() {
+        settings.torrentfolders.load();
+    });
 });
 
-$(document).on('click','.removetorrentfolder', function(e) {
-	var path = $(this).parent().parent().children('.torrentfolder-path').attr('data-path');
-	var folder = {
-		path: path
-	};
-	database.removeTorrentFolder(folder, function() {
-		loadAllTorrentFolders();
-	});
+$(document).on('click', '.removetorrentfolder', function(e) {
+    var path = $(this).parent().parent().children('.torrentfolder-path').attr('data-path');
+    var folder = {
+        path: path
+    };
+    database.local.folders.remove(folder, function() {
+        settings.torrentfolders.load();
+    });
 });
